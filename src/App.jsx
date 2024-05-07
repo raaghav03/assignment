@@ -1,37 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { Upload } from "lucide-react";
-import { Toaster, toast } from "sonner";
-import PropTypes from "prop-types";
-
-const HighlightedText = ({ text, highlight }) => {
-  if (!highlight.trim()) return <>{text}</>;
-  const parts = [];
-  let startIndex = 0;
-  let highlightIndex;
-  const lowerText = text.toLowerCase();
-  const lowerHighlight = highlight.toLowerCase();
-
-  while (
-    (highlightIndex = lowerText.indexOf(lowerHighlight, startIndex)) !== -1
-  ) {
-    const before = text.slice(startIndex, highlightIndex);
-    const highlighted = text.slice(
-      highlightIndex,
-      highlightIndex + highlight.length
-    );
-    parts.push(before);
-    parts.push(<mark key={highlightIndex}>{highlighted}</mark>);
-    startIndex = highlightIndex + highlight.length;
-  }
-
-  parts.push(text.slice(startIndex));
-  return <>{parts}</>;
-};
-
-HighlightedText.propTypes = {
-  text: PropTypes.string.isRequired,
-  highlight: PropTypes.string.isRequired,
-};
+// src/App.jsx
+import { useState, useEffect, useRef } from "react";
+import { Toaster } from "sonner";
+import FileUpload from "./components/FileUpload";
+import SearchInput from "./components/SearchInput";
+import HighlightedText from "./components/HighlightedText";
+import WordCount from "./components/WordCount";
+import SearchCount from "./components/SearchCount";
+import { readFileContent } from "./utils/fileUtils";
+import useSearchHistory from "./hooks/useSearchHistory";
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -40,50 +16,18 @@ export default function App() {
   const [searchText, setSearchText] = useState("");
   const [searchCount, setSearchCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const inputRef = useRef(null);
+  const { addToSearchHistory, getSearchSuggestions } = useSearchHistory();
 
-  // Function to handle file selection and content reading
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile && selectedFile.type === "text/plain") {
       setFile(selectedFile);
-      readFileContent(selectedFile);
+      readFileContent(selectedFile, setFileContent, setWordCount);
     } else {
       console.error("Please select a text file (*.txt)");
     }
   };
 
-  // Function to read file content
-  const readFileContent = (file) => {
-    const fileReader = new FileReader();
-    fileReader.onload = (e) => {
-      const content = e.target.result;
-      setFileContent(content);
-      calculateWordCount(content);
-      toast.success(`${file.name} has been uploaded`);
-    };
-    fileReader.readAsText(file);
-  };
-
-  // Function to calculate word count from text
-  const calculateWordCount = (text) => {
-    const words = text.trim().split(/\s+/);
-    setWordCount(words.filter(Boolean).length);
-  };
-
-  // Function to get search suggestions based on search history and current input
-  const getSearchSuggestions = () => {
-    if (searchText.trim() === "") {
-      return [];
-    }
-
-    return searchHistory.filter((term) =>
-      term.toLowerCase().includes(searchText.toLowerCase())
-    );
-  };
-
-  // Main function to handle search and count occurrences
   const handleSearch = (searchValue) => {
     setSearchText(searchValue);
 
@@ -109,15 +53,13 @@ export default function App() {
 
   const handleEnter = () => {
     if (searchText.trim() !== "") {
-      setSearchHistory((prevHistory) => [
-        ...new Set([...prevHistory, searchText]),
-      ]);
+      addToSearchHistory(searchText);
     }
   };
 
   useEffect(() => {
     handleSearch(searchText);
-  }, [searchText, fileContent]);
+  });
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -141,78 +83,34 @@ export default function App() {
     };
   }, []);
 
-  const searchSuggestions = getSearchSuggestions();
+  const searchSuggestions = getSearchSuggestions(searchText);
   const fileInputRef = useRef(null);
+  const inputRef = useRef(null);
 
   return (
     <>
       <Toaster position="top-right" richColors />
-      <label className="flex rounded-full px-6 py-4 gap-2 m-4 border border-stone-200 text-gray-900 cursor-pointer">
-        <Upload />
-        <p>{file ? file.name : "Upload your file"}</p>
-        <input
-          type="file"
-          accept=".txt"
-          onChange={handleFileChange}
-          className="hidden"
-          ref={fileInputRef}
-        />
-      </label>
-      <div className="relative">
-        <input
-          type="text"
-          placeholder={
-            file ? "Search in file..." : "Please upload a file to enable search"
-          }
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          onFocus={() => setShowDropdown(true)}
-          onBlur={() => setShowDropdown(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleEnter();
-            }
-          }}
-          ref={inputRef}
-          disabled={!file} // Disable input if no file is loaded
-          className={`px-4 py-2 border ${
-            !file ? "border-gray-200" : "border-gray-300"
-          } rounded-md w-full`}
-        />
-
-        {showDropdown && searchHistory.length > 0 && (
-          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-md">
-            {searchSuggestions.map((suggestion, index) => (
-              <div
-                key={index}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => {
-                  setSearchText(suggestion);
-                  setShowDropdown(false);
-                  inputRef.current.focus();
-                }}
-              >
-                {suggestion}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-     
+      <FileUpload file={file} handleFileChange={handleFileChange} />
+      <SearchInput
+        file={file}
+        searchText={searchText}
+        setSearchText={setSearchText}
+        showDropdown={showDropdown}
+        setShowDropdown={setShowDropdown}
+        handleEnter={handleEnter}
+        searchSuggestions={searchSuggestions}
+      />
       {searchText && (
-        <p>
-          Total occurrences: {searchCount}{" "}
-          {searchCount === 1 ? "match" : "matches"}
-        </p>
+        <SearchCount searchText={searchText} searchCount={searchCount} />
       )}
       {fileContent && (
         <div className="m-4 p-4 border border-stone-200 rounded-md">
-          <pre>
+          <pre className="object-fill text-wrap">
             <HighlightedText text={fileContent} highlight={searchText} />
           </pre>
         </div>
       )}
-      <p>{file ? `Word Count: ${wordCount}` : ""}</p>
+      {file && <WordCount wordCount={wordCount} />}
     </>
   );
 }
