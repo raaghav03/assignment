@@ -89,28 +89,42 @@ export default function App() {
 
   return (
     <>
-      <Toaster position="top-right" richColors />
-      <FileUpload file={file} handleFileChange={handleFileChange} />
-      <SearchInput
-        file={file}
-        searchText={searchText}
-        setSearchText={setSearchText}
-        showDropdown={showDropdown}
-        setShowDropdown={setShowDropdown}
-        handleEnter={handleEnter}
-        searchSuggestions={searchSuggestions}
-      />
-      {searchText && (
-        <SearchCount searchText={searchText} searchCount={searchCount} />
-      )}
-      {fileContent && (
-        <div className="m-4 p-4 border border-stone-200 rounded-md">
-          <pre className="object-fill text-wrap">
-            <HighlightedText text={fileContent} highlight={searchText} />
-          </pre>
+      <div className="m-8">
+        <Toaster position="top-right" richColors />
+        <div className="flex flex-row my-4 justify-between ">
+          <div className="flex flex-col ">
+            <p className="text-gray-900 antialiased font-medium text-2xl">
+              {" "}
+              Creative Dalaal FrontEnd Assignment
+            </p>
+            <p className="text-slate-500">By Raghav Nagpal</p>
+          </div>
+          <FileUpload file={file} handleFileChange={handleFileChange} />
         </div>
-      )}
-      {file && <WordCount wordCount={wordCount} />}
+
+        <div className="flex flex-row my-4 justify-between ">
+          <SearchInput
+            file={file}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            showDropdown={showDropdown}
+            setShowDropdown={setShowDropdown}
+            handleEnter={handleEnter}
+            searchSuggestions={searchSuggestions}
+          />
+          {file && <WordCount wordCount={wordCount} />}
+        </div>
+        {searchText && (
+          <SearchCount searchText={searchText} searchCount={searchCount} />
+        )}
+        {fileContent && (
+          <div className="m-4 p-4 border border-stone-200 rounded-md">
+            <pre className="object-fill text-wrap">
+              <HighlightedText text={fileContent} highlight={searchText} />
+            </pre>
+          </div>
+        )}
+      </div>
     </>
   );
 }
