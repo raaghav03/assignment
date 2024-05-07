@@ -1,12 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { Toaster, toast } from "sonner";
-// import { debounce } from "lodash";
-import PropTypes from "prop-types"; // Proper import statement
+import PropTypes from "prop-types";
 
-// HighlightedText component definition
 const HighlightedText = ({ text, highlight }) => {
-  if (!highlight.trim()) return <>{text}</>; // Ensure empty strings don't cause false highlights
+  if (!highlight.trim()) return <>{text}</>;
   const parts = [];
   let startIndex = 0;
   let highlightIndex;
@@ -26,7 +24,7 @@ const HighlightedText = ({ text, highlight }) => {
     startIndex = highlightIndex + highlight.length;
   }
 
-  parts.push(text.slice(startIndex)); // Append remaining text after the last match
+  parts.push(text.slice(startIndex));
   return <>{parts}</>;
 };
 
@@ -41,6 +39,9 @@ export default function App() {
   const [wordCount, setWordCount] = useState(0);
   const [searchText, setSearchText] = useState("");
   const [searchCount, setSearchCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
+  const inputRef = useRef(null);
 
   // Function to handle file selection and content reading
   const handleFileChange = (e) => {
@@ -71,34 +72,77 @@ export default function App() {
     setWordCount(words.filter(Boolean).length);
   };
 
+  // Function to get search suggestions based on search history and current input
+  const getSearchSuggestions = () => {
+    if (searchText.trim() === "") {
+      return [];
+    }
+
+    return searchHistory.filter((term) =>
+      term.toLowerCase().includes(searchText.toLowerCase())
+    );
+  };
+
   // Main function to handle search and count occurrences
-const handleSearch = (searchValue) => {
-  setSearchText(searchValue);
+  const handleSearch = (searchValue) => {
+    setSearchText(searchValue);
 
-  if (searchValue === "") {
-    // Handle empty search query logically
-    setSearchCount(0);
-    return;
-  }
+    if (searchValue === "") {
+      setSearchCount(0);
+      return;
+    }
 
-  const lowerSearchValue = searchValue.toLowerCase();
-  let count = 0;
-  const lowerContent = fileContent.toLowerCase();
-  let searchIndex = 0;
+    const lowerSearchValue = searchValue.toLowerCase();
+    let count = 0;
+    const lowerContent = fileContent.toLowerCase();
+    let searchIndex = 0;
 
-  while (
-    (searchIndex = lowerContent.indexOf(lowerSearchValue, searchIndex)) !== -1
-  ) {
-    count++;
-    searchIndex += lowerSearchValue.length; // Ensure the next search starts after the current match to avoid infinite loops
-  }
+    while (
+      (searchIndex = lowerContent.indexOf(lowerSearchValue, searchIndex)) !== -1
+    ) {
+      count++;
+      searchIndex += lowerSearchValue.length;
+    }
 
-  setSearchCount(count);
-};
+    setSearchCount(count);
+  };
 
+  const handleEnter = () => {
+    if (searchText.trim() !== "") {
+      setSearchHistory((prevHistory) => [
+        ...new Set([...prevHistory, searchText]),
+      ]);
+    }
+  };
 
-  // Debounce the search handler function to optimize performance
-  // const debouncedHandleSearch = debounce(handleSearch, 300);
+  useEffect(() => {
+    handleSearch(searchText);
+  }, [searchText, fileContent]);
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Handle CMD+U or CTRL+U to trigger file upload
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+        fileInputRef.current.click(); // Programmatically open file dialog
+      }
+
+      // Handle CMD+F or CTRL+F to focus on the search input
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault(); // Prevent default find dialog
+        inputRef.current.focus(); // Focus on the search input
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyPress);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress); // Cleanup the event listener
+    };
+  }, []);
+
+  const searchSuggestions = getSearchSuggestions();
+  const fileInputRef = useRef(null);
 
   return (
     <>
@@ -111,23 +155,49 @@ const handleSearch = (searchValue) => {
           accept=".txt"
           onChange={handleFileChange}
           className="hidden"
+          ref={fileInputRef} // Reference to this input
         />
       </label>
-      <div className="m-4">
+      <div className="relative">
         <input
           type="text"
           placeholder="Search in file..."
           value={searchText}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => setSearchText(e.target.value)}
+          onFocus={() => setShowDropdown(true)}
+          onBlur={() => setShowDropdown(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleEnter();
+            }
+          }}
+          ref={inputRef} // Reference to this input for search
           className="px-4 py-2 border border-gray-300 rounded-md"
         />
-        {searchText && (
-          <p>
-            Total occurrences: {searchCount}{" "}
-            {searchCount === 1 ? "match" : "matches"}
-          </p>
+        {showDropdown && searchHistory.length > 0 && (
+          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-md">
+            {searchSuggestions.map((suggestion, index) => (
+              <div
+                key={index}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => {
+                  setSearchText(suggestion);
+                  setShowDropdown(false);
+                  inputRef.current.focus();
+                }}
+              >
+                {suggestion}
+              </div>
+            ))}
+          </div>
         )}
       </div>
+      {searchText && (
+        <p>
+          Total occurrences: {searchCount}{" "}
+          {searchCount === 1 ? "match" : "matches"}
+        </p>
+      )}
       {fileContent && (
         <div className="m-4 p-4 border border-stone-200 rounded-md">
           <pre>
