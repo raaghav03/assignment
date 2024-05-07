@@ -155,13 +155,15 @@ export default function App() {
           accept=".txt"
           onChange={handleFileChange}
           className="hidden"
-          ref={fileInputRef} // Reference to this input
+          ref={fileInputRef}
         />
       </label>
       <div className="relative">
         <input
           type="text"
-          placeholder="Search in file..."
+          placeholder={
+            file ? "Search in file..." : "Please upload a file to enable search"
+          }
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           onFocus={() => setShowDropdown(true)}
@@ -171,9 +173,13 @@ export default function App() {
               handleEnter();
             }
           }}
-          ref={inputRef} // Reference to this input for search
-          className="px-4 py-2 border border-gray-300 rounded-md"
+          ref={inputRef}
+          disabled={!file} // Disable input if no file is loaded
+          className={`px-4 py-2 border ${
+            !file ? "border-gray-200" : "border-gray-300"
+          } rounded-md w-full`}
         />
+
         {showDropdown && searchHistory.length > 0 && (
           <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-md">
             {searchSuggestions.map((suggestion, index) => (
@@ -192,6 +198,7 @@ export default function App() {
           </div>
         )}
       </div>
+     
       {searchText && (
         <p>
           Total occurrences: {searchCount}{" "}
