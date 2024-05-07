@@ -1,32 +1,35 @@
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import { Toaster, toast } from "sonner";
+// import { debounce } from "lodash";
+import PropTypes from "prop-types"; // Proper import statement
 
-import PropTypes from "prop-types"; // Import PropTypes
+// HighlightedText component definition
 const HighlightedText = ({ text, highlight }) => {
-  if (!highlight) return <>{text}</>;
-
+  if (!highlight.trim()) return <>{text}</>; // Ensure empty strings don't cause false highlights
   const parts = [];
   let startIndex = 0;
   let highlightIndex;
+  const lowerText = text.toLowerCase();
+  const lowerHighlight = highlight.toLowerCase();
 
   while (
-    (highlightIndex = text
-      .toLowerCase()
-      .indexOf(highlight.toLowerCase(), startIndex)) !== -1
+    (highlightIndex = lowerText.indexOf(lowerHighlight, startIndex)) !== -1
   ) {
-    const part1 = text.slice(startIndex, highlightIndex);
-    const part2 = text.slice(highlightIndex, highlightIndex + highlight.length);
-    parts.push(part1, <mark key={highlightIndex}>{part2}</mark>);
+    const before = text.slice(startIndex, highlightIndex);
+    const highlighted = text.slice(
+      highlightIndex,
+      highlightIndex + highlight.length
+    );
+    parts.push(before);
+    parts.push(<mark key={highlightIndex}>{highlighted}</mark>);
     startIndex = highlightIndex + highlight.length;
   }
 
-  if (startIndex < text.length) {
-    parts.push(text.slice(startIndex));
-  }
-
+  parts.push(text.slice(startIndex)); // Append remaining text after the last match
   return <>{parts}</>;
 };
+
 HighlightedText.propTypes = {
   text: PropTypes.string.isRequired,
   highlight: PropTypes.string.isRequired,
@@ -39,55 +42,63 @@ export default function App() {
   const [searchText, setSearchText] = useState("");
   const [searchCount, setSearchCount] = useState(0);
 
+  // Function to handle file selection and content reading
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile && selectedFile.type === "text/plain") {
       setFile(selectedFile);
       readFileContent(selectedFile);
-      console.log(selectedFile.name);
     } else {
       console.error("Please select a text file (*.txt)");
     }
   };
 
-  const calculateWordCount = (text) => {
-    if (!text) return 0;
-    const words = text.trim().split(/\s+/);
-    const filteredWords = words.filter(Boolean);
-    setWordCount(filteredWords.length);
-  };
-
+  // Function to read file content
   const readFileContent = (file) => {
     const fileReader = new FileReader();
     fileReader.onload = (e) => {
       const content = e.target.result;
       setFileContent(content);
-      toast.success(`${file.name} has been uploaded`);
       calculateWordCount(content);
+      toast.success(`${file.name} has been uploaded`);
     };
     fileReader.readAsText(file);
   };
 
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-
-    let count = 0;
-    let lowercaseContent = fileContent.toLowerCase();
-    let searchIndex = 0;
-
-    while (
-      (searchIndex = lowercaseContent.indexOf(
-        searchValue.toLowerCase(),
-        searchIndex
-      )) !== -1
-    ) {
-      count++;
-      searchIndex += searchValue.length;
-    }
-
-    setSearchCount(count);
+  // Function to calculate word count from text
+  const calculateWordCount = (text) => {
+    const words = text.trim().split(/\s+/);
+    setWordCount(words.filter(Boolean).length);
   };
+
+  // Main function to handle search and count occurrences
+const handleSearch = (searchValue) => {
+  setSearchText(searchValue);
+
+  if (searchValue === "") {
+    // Handle empty search query logically
+    setSearchCount(0);
+    return;
+  }
+
+  const lowerSearchValue = searchValue.toLowerCase();
+  let count = 0;
+  const lowerContent = fileContent.toLowerCase();
+  let searchIndex = 0;
+
+  while (
+    (searchIndex = lowerContent.indexOf(lowerSearchValue, searchIndex)) !== -1
+  ) {
+    count++;
+    searchIndex += lowerSearchValue.length; // Ensure the next search starts after the current match to avoid infinite loops
+  }
+
+  setSearchCount(count);
+};
+
+
+  // Debounce the search handler function to optimize performance
+  // const debouncedHandleSearch = debounce(handleSearch, 300);
 
   return (
     <>
@@ -107,7 +118,7 @@ export default function App() {
           type="text"
           placeholder="Search in file..."
           value={searchText}
-          onChange={handleSearch}
+          onChange={(e) => handleSearch(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-md"
         />
         {searchText && (
