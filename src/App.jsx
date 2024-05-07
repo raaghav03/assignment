@@ -101,15 +101,19 @@ export default function App() {
           </div>
           <FileUpload file={file} handleFileChange={handleFileChange} />
         </div>
-        <SearchInput
-          file={file}
-          searchText={searchText}
-          setSearchText={setSearchText}
-          showDropdown={showDropdown}
-          setShowDropdown={setShowDropdown}
-          handleEnter={handleEnter}
-          searchSuggestions={searchSuggestions}
-        />
+
+        <div className="flex flex-row my-4 justify-between ">
+          <SearchInput
+            file={file}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            showDropdown={showDropdown}
+            setShowDropdown={setShowDropdown}
+            handleEnter={handleEnter}
+            searchSuggestions={searchSuggestions}
+          />
+          {file && <WordCount wordCount={wordCount} />}
+        </div>
         {searchText && (
           <SearchCount searchText={searchText} searchCount={searchCount} />
         )}
@@ -120,7 +124,6 @@ export default function App() {
             </pre>
           </div>
         )}
-        {file && <WordCount wordCount={wordCount} />}
       </div>
     </>
   );

@@ -15,10 +15,10 @@ const SearchInput = ({
 
   const placeholderText = file
     ? "Search in File"
-    : "Please upload a file to enable search";
+    : "No file Uploaded";
 
   return (
-    <p className="fit-content">
+    <p>
       <input
         type="text"
         placeholder={placeholderText}
@@ -35,8 +35,8 @@ const SearchInput = ({
         disabled={!file}
         className={`px-4 py-2 border object-fill ${
           !file ? "border-gray-200" : "border-gray-300"
-        } rounded-md w-1/4 hover:border-gray-400 focus:border-blue-500 focus:outline-none ${
-          !file ? "cursor-not-allowed" : "cursor-auto"
+        } rounded-md flex-4  hover:border-gray-400 focus:border-blue-500 focus:outline-none ${
+          !file ? "cursor-not-allowed flex-4 " : "cursor-auto"
         }`}
       />
       {showDropdown && searchSuggestions.length > 0 && (

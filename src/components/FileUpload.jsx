@@ -8,7 +8,7 @@ const FileUpload = ({ file, handleFileChange }) => (
     className="flex items-center justify-center rounded-full px-6 py-4 gap-2 border-2  text-gray-800 bg-white cursor-pointer transition-all duration-300 hover:bg-gray-100 hover:shadow-sm active:bg-gray-200 active:shadow-inner"
   >
     <Upload size={20} />
-    <span>{file ? file.name : "Upload your file"}</span>
+    <span>{file ? `${file.name} is uploaded` : "Upload your file"}</span>
     <input
       id="file-upload"
       type="file"
