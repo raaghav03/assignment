@@ -13,13 +13,15 @@ const SearchInput = ({
 }) => {
   const inputRef = useRef(null);
 
+  const placeholderText = file
+    ? "Search in File"
+    : "Please upload a file to enable search";
+
   return (
-    <div className="relative">
+    <p className="fit-content">
       <input
         type="text"
-        placeholder={
-          file ? "Search in file..." : "Please upload a file to enable search"
-        }
+        placeholder={placeholderText}
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
         onFocus={() => setShowDropdown(true)}
@@ -29,11 +31,11 @@ const SearchInput = ({
             handleEnter();
           }
         }}
-        ref={inputRef} // src/components/SearchInput.jsx (continued)
+        ref={inputRef}
         disabled={!file}
-        className={`px-4 py-2 border ${
+        className={`px-4 py-2 border object-fill ${
           !file ? "border-gray-200" : "border-gray-300"
-        } rounded-md w-full hover:border-gray-400 focus:border-blue-500 focus:outline-none ${
+        } rounded-md w-1/4 hover:border-gray-400 focus:border-blue-500 focus:outline-none ${
           !file ? "cursor-not-allowed" : "cursor-auto"
         }`}
       />
@@ -45,17 +47,18 @@ const SearchInput = ({
           inputRef={inputRef}
         />
       )}
-    </div>
+    </p>
   );
 };
+
 SearchInput.propTypes = {
   searchText: PropTypes.string.isRequired,
-  setSearchText: PropTypes.string.isRequired,
+  setSearchText: PropTypes.func.isRequired,
   showDropdown: PropTypes.bool.isRequired,
-  searchSuggestions: PropTypes.string.isRequired,
-  file: PropTypes.isRequired,
-  setShowDropdown: PropTypes.bool.isRequired,
-  handleEnter: PropTypes.isRequired,
+  searchSuggestions: PropTypes.arrayOf(PropTypes.string).isRequired,
+  file: PropTypes.any, // relaxed type since the file can be null or an object
+  setShowDropdown: PropTypes.func.isRequired,
+  handleEnter: PropTypes.func.isRequired,
 };
 
 export default SearchInput;
