@@ -17,6 +17,8 @@ export default function App() {
   const [searchCount, setSearchCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const { addToSearchHistory, getSearchSuggestions } = useSearchHistory();
+  const fileInputRef = useRef(null);
+  const inputRef = useRef(null);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -66,26 +68,25 @@ export default function App() {
       // Handle CMD+U or CTRL+U to trigger file upload
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "u") {
         e.preventDefault();
-        fileInputRef.current.click(); // Programmatically open file dialog
+        if (fileInputRef.current) {
+          fileInputRef.current.click(); // Programmatically open file dialog
+        }
       }
 
       // Handle CMD+F or CTRL+F to focus on the search input
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
         e.preventDefault(); // Prevent default find dialog
-        inputRef.current.focus(); // Focus on the search input
+        if (inputRef.current) {
+          inputRef.current.focus(); // Focus on the search input
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyPress);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyPress); // Cleanup the event listener
-    };
+    return () => document.removeEventListener("keydown", handleKeyPress); // Cleanup the event listener
   }, []);
 
   const searchSuggestions = getSearchSuggestions(searchText);
-  const fileInputRef = useRef(null);
-  const inputRef = useRef(null);
 
   return (
     <>
@@ -99,31 +100,49 @@ export default function App() {
             </p>
             <p className="text-slate-500">By Raghav Nagpal</p>
           </div>
-          <FileUpload file={file} handleFileChange={handleFileChange} />
-        </div>
-
-        <div className="flex flex-row my-4 justify-between ">
-          <SearchInput
+          <FileUpload
             file={file}
-            searchText={searchText}
-            setSearchText={setSearchText}
-            showDropdown={showDropdown}
-            setShowDropdown={setShowDropdown}
-            handleEnter={handleEnter}
-            searchSuggestions={searchSuggestions}
+            handleFileChange={handleFileChange}
+            ref={fileInputRef}
           />
-          {file && <WordCount wordCount={wordCount} />}
         </div>
-        {searchText && (
-          <SearchCount searchText={searchText} searchCount={searchCount} />
-        )}
-        {fileContent && (
-          <div className="m-4 p-4 border border-stone-200 rounded-md">
-            <pre className="object-fill text-wrap">
-              <HighlightedText text={fileContent} highlight={searchText} />
-            </pre>
+        {!file && (
+          <div className="bg-yellow-100 border border-yellow-400  text-yellow-700 px-4 py-3 rounded-md relative my-4">
+            No file has been uploaded yet. Please upload a file to continue.
           </div>
         )}
+        {
+          <>
+            <div className="flex flex-row my-4 justify-between ">
+              <SearchInput
+                file={file}
+                searchText={searchText}
+                setSearchText={setSearchText}
+                showDropdown={showDropdown}
+                setShowDropdown={setShowDropdown}
+                handleEnter={handleEnter}
+                searchSuggestions={searchSuggestions}
+              />
+              <WordCount wordCount={wordCount} />
+            </div>
+            {searchText && (
+              <SearchCount searchText={searchText} searchCount={searchCount} />
+            )}
+            {fileContent && (
+              <div className="m-4 p-4 border border-stone-200 rounded-md">
+                <pre className="object-fill text-wrap">
+                  <HighlightedText text={fileContent} highlight={searchText} />
+                </pre>
+              </div>
+            )}
+          </>
+        }
+      </div>
+      <div className="fixed bottom-4 right-4 bg-gray-100 p-4 text-gray-800  rounded-full">
+        <p className="text-sm">
+          Use <span className="font-semibold">cmd+f</span> for file search and{" "}
+          <span className="font-semibold">cmd+u</span> for file upload
+        </p>
       </div>
     </>
   );
