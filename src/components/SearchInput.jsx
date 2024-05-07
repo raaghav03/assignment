@@ -1,6 +1,5 @@
-import { useRef } from "react";
 import PropTypes from "prop-types";
-import SearchHistoryDropdown from "./SearchHistory";
+import SearchHistoryDropdown from "./SearchHistory"; // Make sure the import is correct
 
 const SearchInput = ({
   file,
@@ -10,12 +9,9 @@ const SearchInput = ({
   setShowDropdown,
   handleEnter,
   searchSuggestions,
+  inputRef, // Receive inputRef as a prop
 }) => {
-  const inputRef = useRef(null);
-
-  const placeholderText = file
-    ? "Search in File"
-    : "No file Uploaded";
+  const placeholderText = file ? "Search in File" : "No file Uploaded";
 
   return (
     <p>
@@ -35,8 +31,8 @@ const SearchInput = ({
         disabled={!file}
         className={`px-4 py-2 border object-fill ${
           !file ? "border-gray-200" : "border-gray-300"
-        } rounded-md flex-4  hover:border-gray-400 focus:border-blue-500 focus:outline-none ${
-          !file ? "cursor-not-allowed flex-4 " : "cursor-auto"
+        } rounded-md flex-4 hover:border-gray-400 focus:border-blue-500 focus:outline-none ${
+          !file ? "cursor-not-allowed flex-4" : "cursor-auto"
         }`}
       />
       {showDropdown && searchSuggestions.length > 0 && (
@@ -52,13 +48,17 @@ const SearchInput = ({
 };
 
 SearchInput.propTypes = {
+  file: PropTypes.any, // Consider specifying a more specific type or using PropTypes.shape
   searchText: PropTypes.string.isRequired,
   setSearchText: PropTypes.func.isRequired,
   showDropdown: PropTypes.bool.isRequired,
-  searchSuggestions: PropTypes.arrayOf(PropTypes.string).isRequired,
-  file: PropTypes.any, // relaxed type since the file can be null or an object
   setShowDropdown: PropTypes.func.isRequired,
   handleEnter: PropTypes.func.isRequired,
+  searchSuggestions: PropTypes.arrayOf(PropTypes.string).isRequired,
+  inputRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]).isRequired,
 };
 
 export default SearchInput;

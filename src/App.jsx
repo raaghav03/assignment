@@ -65,25 +65,23 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyPress = (e) => {
-      // Handle CMD+U or CTRL+U to trigger file upload
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "u") {
-        e.preventDefault();
-        if (fileInputRef.current) {
-          fileInputRef.current.click(); // Programmatically open file dialog
-        }
-      }
-
-      // Handle CMD+F or CTRL+F to focus on the search input
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
-        e.preventDefault(); // Prevent default find dialog
+        e.preventDefault();
         if (inputRef.current) {
-          inputRef.current.focus(); // Focus on the search input
+          inputRef.current.focus();
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "u") {
+        if (fileInputRef.current) {
+          e.preventDefault();
+          fileInputRef.current.click();
         }
       }
     };
 
     document.addEventListener("keydown", handleKeyPress);
-    return () => document.removeEventListener("keydown", handleKeyPress); // Cleanup the event listener
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress);
+    };
   }, []);
 
   const searchSuggestions = getSearchSuggestions(searchText);
@@ -122,7 +120,9 @@ export default function App() {
                 setShowDropdown={setShowDropdown}
                 handleEnter={handleEnter}
                 searchSuggestions={searchSuggestions}
+                inputRef={inputRef} // Pass inputRef as a prop
               />
+
               <WordCount wordCount={wordCount} />
             </div>
             {searchText && (
